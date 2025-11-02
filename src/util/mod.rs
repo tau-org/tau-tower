@@ -19,6 +19,7 @@ impl Credentials {
   }
 }
 
+#[derive(Debug)]
 pub struct Headers {pub headers: Option<Bytes>}
 
 impl Headers {

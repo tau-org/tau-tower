@@ -123,6 +123,7 @@ async fn receive_data(ws_stream: &mut WebSocketStream<TcpStream>, header: Arc<Mu
         headers_parsed = true;
       }
     }
+
     if let Err(e) = tx.send(page) && last_log.elapsed() > LOG_TIMEOUT {
       eprintln!("could not open client stream: {e}"); 
       last_log = Instant::now();
