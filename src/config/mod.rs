@@ -85,7 +85,11 @@ impl Config {
         "\n{color_bright_yellow}No config found at '{}'. Let's create one: {color_reset}",
         path.display()
       );
-      println!("{color_bright_red}Credentials must correspond to the source stream config{color_reset}\n");
+        
+      println!(
+        "{color_bright_red}Credentials must correspond to the source stream config{color_reset}\n"
+      );
+        
       let username: String = Input::new()
         .with_prompt(format!("{color_bright_yellow}Username{color_reset}"))
         .interact_text()
