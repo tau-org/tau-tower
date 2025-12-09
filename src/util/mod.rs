@@ -3,15 +3,13 @@ use hyper::body::Bytes;
 pub struct Credentials {
   pub username: String,
   pub password: String,
-  pub broadcast_port: u16
 }
 
 impl Credentials {
-  pub fn validate(&self, username: Option<&str>, password: Option<&str>, port: Option<u16>) -> bool {
-    if (username, password, port) == (
+  pub fn validate(&self, username: Option<&str>, password: Option<&str>) -> bool {
+    if (username, password) == (
       Some(&self.username),
       Some(&self.password),
-      Some(self.broadcast_port)
       ) {
       return true
     }
