@@ -62,10 +62,6 @@ fn validate_headers(req: &Request<()>, res: hyper::Response<()>, credentials: &C
     .get("password")
     .and_then(|pw| pw.to_str().ok());
 
-  let port = req.headers()
-    .get("port")
-    .and_then(|port| port.to_str().ok()?.parse::<u16>().ok());
-
   if username.is_none() || password.is_none() {
     return Err(
       Response::builder()
@@ -75,16 +71,7 @@ fn validate_headers(req: &Request<()>, res: hyper::Response<()>, credentials: &C
     )
   }
 
-  if port.is_none() {
-    return Err(
-      Response::builder()
-        .status(StatusCode::BAD_REQUEST)
-        .body(Some("Missing or invalid port".to_string()))
-        .unwrap()
-    )
-  }
-
-  if !credentials.validate(username, password, port) {
+  if !credentials.validate(username, password) {
     return Err(
       Response::builder()
         .status(StatusCode::FORBIDDEN)
