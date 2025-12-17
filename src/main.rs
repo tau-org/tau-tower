@@ -29,7 +29,6 @@ async fn main() -> anyhow::Result<()> {
   let creds = Credentials{
     username: config.username.clone(), 
     password: config.password.clone(),
-    broadcast_port: config.mount_port
   };
 
   let headers = Arc::new(Mutex::new(Headers{headers: None})); 
