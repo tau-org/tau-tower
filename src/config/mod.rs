@@ -29,6 +29,9 @@ pub enum TauConfigError {
     #[error("invalid port number: {0}")]
     InvalidPort(u16),
 
+    #[error("invalid endpoint formatting: {0}")]
+    InvalidEndpoint(String),
+
     #[error("user input error: {0}")]
     Input(String),
 }

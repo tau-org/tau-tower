@@ -20,6 +20,7 @@ clap = { version = "4.5.47", features = ["derive"] }
 is-ip = "0.1.0"
 openssl = { version = "0.10.73", features = ["vendored"] }
 inline_colorization = "0.1.6"
+regex-lite = "0.1.9"
 
 [target.x86_64-unknown-linux-gnu]
 linker = "x86_64-linux-gnu-gcc"

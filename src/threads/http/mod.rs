@@ -14,7 +14,7 @@ pub async fn thread(
     ip_addr: impl tokio::net::ToSocketAddrs + std::fmt::Debug,
     tx: broadcast::Sender<Bytes>,
     header: Arc<RwLock<Option<Headers>>>,
-    mount: Arc<str>
+    mount: Arc<String>
 ) -> anyhow::Result<()> {
   let listener = match TcpListener::bind(&ip_addr).await {
     Ok(tl) => tl,
@@ -45,7 +45,7 @@ pub async fn thread(
     tokio::task::spawn(async move {
       if let Err(err) = http1::Builder::new()
         .serve_connection(io, service_fn(move |req| {
-          handle_request(req, tx_inner_clone.clone(), header_clone.clone(), mount_clone.clone())
+          handle_request(req, tx_inner_clone.clone(), header_clone.clone(),  mount_clone.clone())
       }))
         .await
       {

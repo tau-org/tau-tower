@@ -1,9 +1,5 @@
-
-
 use clap::Parser;
-
-// use crate::StreamType;
-use crate::util::ip::{validate_port, parse_port};
+use crate::util::ip::{validate_port, parse_port, validate_endpoint};
 
 #[derive(Parser)]
 #[command(name = "tau-tower")]
@@ -26,7 +22,7 @@ pub(crate) struct Args {
     #[arg(short='p', long, value_parser=|p: &str| { validate_port(parse_port(p).unwrap()) })]
     pub mount_port: Option<u16>,
 
-    #[arg(short, long)]
+    #[arg(short, long, value_parser=|m: &str| { validate_endpoint(m) })]
     pub mount: Option<String>,
 
     #[arg(long)]
