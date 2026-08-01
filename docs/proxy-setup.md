@@ -1,98 +1,58 @@
+# Put tau-tower behind Caddy
 
-## To use Tau-Tower on a remote server
+Caddy is a reverse proxy that terminates HTTPS and forwards to `tau-tower` on the
+same server, which gives you a browser-trusted certificate with no manual
+certificate steps. This is part of the [self-hosting guide](self-hosting.md).
+Before doing the following, `tau-tower` should be configured and the firewall open.
 
-----
+Install Caddy from the [Caddy install guide](https://caddyserver.com/docs/install),
+then edit the Caddyfile (usually `/etc/caddy/Caddyfile` on packaged Linux
+installs):
 
-### Setting up Tau with Caddy
-
-
-We use `Caddy` to funnel the source client stream to the broadcast software
-[tau-tower](https://github.com/tau-org/tau-tower). 
-
-[How to install Caddy on your system](https://caddyserver.com/docs/install)
-
-Make sure that your VPS or remote server has the correct ports open to receive
-and broadcast the radio stream. 
-
-#### TLS __enabled__ source stream
-``` Caddyfile
-# incoming audio source stream
-example.com:8001 {
-    reverse_proxy :6000
-}
-
-# outgoing audio broadcast stream
-example.com {
-    reverse_proxy :6001
-}
-```
-
----
-
-The above Caddyfile assumes that `tau-radio` has enabled __tls/ssl encryption__, but for if for
-some reason you would like to broadcast with __tls/ssl__ disabled, you can
-configure Caddy like below:
-
-If doing this, __it would be wise to restrict your server to only receive from your public IP 
-when sending to the upstream port__. 
-
-#### TLS __disabled__ source stream
 ```Caddyfile
-# incoming INSECURE audio source stream
-# use the IP address of the upstream server instead of domain name
+<your-audio-domain>:8001 {
+    reverse_proxy 127.0.0.1:6000
+}
+
+<your-audio-domain> {
+    reverse_proxy 127.0.0.1:6001
+}
+```
+
+The first block forwards the `tau-radio` source connection on `8001` to
+`listen_port`; the second serves listeners over HTTPS from `broadcast_port`. Keep
+`127.0.0.1` literal, since Caddy and `tau-tower` run on the same machine. Replace
+both domain values, then validate and reload:
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Port `8001` carries the encrypted source connection from `tau-radio`, not listener
+traffic. Listeners use the plain HTTPS domain at
+`https://<your-audio-domain>/tau.ogg`.
+
+For advanced configuration, see the official
+[Caddy documentation](https://caddyserver.com/docs/).
+
+## Broadcast without TLS (optional)
+
+The setup above assumes `tau-radio` sends with `tls = true`. If you cannot enable
+TLS on the source stream, match the source port with no domain so Caddy does not
+try to obtain a certificate for it, and keep the listener block on HTTPS:
+
+```Caddyfile
 :8001 {
-    reverse_proxy :6000
+    reverse_proxy 127.0.0.1:6000
 }
 
-# outgoing audio broadcast stream
-example.com {
-    reverse_proxy :6001
+<your-audio-domain> {
+    reverse_proxy 127.0.0.1:6001
 }
 ```
 
----
-
-## TOML configs
-
-Below is an updated config file for `tau-tower` which uses the ports from `Caddyfile` example [above](#tls-enabled-source-stream). 
-
-``` tower.toml
-username = "username" 
-password = "emanresu" 
-
-# local listen port
-listen_port = 6000
-
-# local broadcast port
-broadcast-port = 6001      
-
-broadcast-endpoint = "tau.ogg"       
-
-# When Asciinema server is used, we need to allow it to fetch the stream
-cors_allow_list = ["https://asciinema.example.com"]
-```
-
-In the `tau-radio` client config, we set `tls = true` enabling a __tls/ssl-encrypted__ 
-stream to the remote server on the port we have set. Caddy will handle the decryption if 
-configured as the TLS enabled Caddyfile example
-[above](#tls-enabled-source-stream).
-
-``` config.toml
-username = "username"
-password = "emanresu"
-
-# URL to the remote server ( use IP address if tls = false )
-url = "example.com"
-
-# The remote server port where we send the stream
-upstream_port = 8001
-
-# Default audio interface on macOS
-audio_interface = "BlackHole 2ch"
-
-# On linux
-# audio_interface = "pipewire"
-
-# broadcast behind tls/ssl encryption ( recommended )
-tls = true
-```
+In the `tau-radio` config, set `tls = false` and set `url` to the server's IP
+address. Because the source stream is now unencrypted, restrict inbound port
+`8001` in the server firewall to your broadcaster's public IP, so only you can
+send to it.
