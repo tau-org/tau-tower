@@ -1,46 +1,55 @@
+# Add a self-hosted Asciinema terminal stream
 
-### Setting up Tau and Asciinema with Caddy
+Asciinema streams your terminal, and Tau supplies the audio, so an Asciinema page
+can play your session with the Tau audio attached. Set this up after the audio
+deploy in the [self-hosting guide](self-hosting.md) is working.
 
-This setup follows the [proxy-setup.md](docs/proxy-setup), however adds the
-Asciinema server as an application running on the same server as your tau-tower
-server. We need to reverse_proxy the asciinema-server, on default port 4000, to make the
-server acessable. 
+You run a self-hosted Asciinema server on the same VPS as `tau-tower`. It listens
+on `127.0.0.1:4000`, and Caddy publishes it at `<your-asciinema-domain>`, so no
+new firewall ports are needed. For production concerns like email, storage, and
+upgrades, follow the
+[Asciinema server self-hosting guide](https://docs.asciinema.org/manual/server/self-hosting/).
 
-``` Caddyfile
-# incoming audio source stream from tau-radio
-example.com:8001 {
-    reverse_proxy :6000
-}
+## Step 1: Add the Asciinema DNS record
 
-# outgoing audio broadcast stream from tau-tower
-example.com {
-    reverse_proxy :6001
-}
+Create an A record for `<your-asciinema-domain>` pointing at the server's IP
+address, then confirm it resolves:
 
-# asciinema server
-asciinema.example.com {
-    reverse_proxy :4000
-}
+```bash
+dig +short <your-asciinema-domain>
 ```
 
-### Asciinema setup
+## Step 2: Install Docker and start Asciinema
 
-Below is a copy from the [`Getting started`](https://docs.asciinema.org/getting-started/#self-hosting-the-server)-section from the Asciinema Documentation. 
+Install Docker Engine and Docker Compose.
+Then create a directory for the deployment:
 
-----
+```bash
+sudo mkdir -p /opt/asciinema
+cd /opt/asciinema
+```
 
-While asciinema.org is the default asciinema server used by the CLI for uploading recordings, you can self-host your own instance if you want full ownership and control over the recordings.
+Generate a secret key into an `.env` file, which the Compose file reads:
 
-asciinema server is packaged as OCI container image and is available at ghcr.io/asciinema/asciinema-server.
+```bash
+SECRET_KEY_BASE=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 64; echo)
+echo "SECRET_KEY_BASE=$SECRET_KEY_BASE" | sudo tee .env
+```
 
-Here's a minimal docker-compose example:
+Create `/opt/asciinema/docker-compose.yml`, replacing `<your-asciinema-domain>`.
+You can swap `latest` for a pinned tag from the
+[Asciinema server releases](https://github.com/asciinema/asciinema-server/releases):
 
-```yml
+```yaml
 services:
   asciinema:
     image: ghcr.io/asciinema/asciinema-server:latest
     ports:
-      - '4000:4000'
+      - "127.0.0.1:4000:4000"
+    environment:
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - URL_HOST=<your-asciinema-domain>
+      - URL_SCHEME=https
     volumes:
       - asciinema_data:/var/lib/asciinema
     depends_on:
@@ -49,12 +58,12 @@ services:
 
   postgres:
     image: docker.io/library/postgres:14
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s
       timeout: 5s
       retries: 10
@@ -64,28 +73,72 @@ volumes:
   postgres_data:
 ```
 
-----
-
-Start it with:
+Start the stack:
 
 ```bash
-docker compose up
+sudo docker compose up -d
 ```
 
-Then point asciinema CLI to it by setting ASCIINEMA_API_URL environment variable:
-(Set env variable properly if the intended use is a public-facing asciinema server. 
-Follow the full guide on https://docs.asciinema.org).
+## Step 3: Publish Asciinema through Caddy
 
-```
-# export ASCIINEMA_API_URL=https://asciinema.example.com
+Add this block to `/etc/caddy/Caddyfile`, below the Tau audio blocks, replacing
+`<your-asciinema-domain>`:
 
-# localhost example
-export ASCIINEMA_API_URL=http://localhost:4000
-
-asciinema rec demo.cast
-asciinema upload demo.cast
+```Caddyfile
+<your-asciinema-domain> {
+    reverse_proxy 127.0.0.1:4000
+}
 ```
 
-Note that the above configuration should be used only for testing the server locally. See full [`server self-hosting`](https://docs.asciinema.org/manual/server/self-hosting/) guide to learn how to set it up properly in a full-featured and secure way.
+Validate and reload Caddy, then open `https://<your-asciinema-domain>` to confirm
+the site loads:
 
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
 
+Now that the Asciinema domain is live, you can restrict `tau-tower`'s
+`cors_allow_list` in `tower.toml` to `["https://<your-asciinema-domain>"]` and
+restart `tau-tower`, so only the Asciinema site can embed the audio stream.
+
+## Step 4: Log in to your Asciinema site
+
+Asciinema logs you in with an emailed link. If you have not configured SMTP, pull
+the link from the server logs instead. Submit your email on the login page, then
+run:
+
+```bash
+cd /opt/asciinema
+sudo docker compose logs asciinema | grep 'url from email' | tail -n 5
+```
+
+Open the newest URL and finish signing up in the browser.
+
+## Step 5: Authenticate the Asciinema CLI
+
+On the broadcaster machine, install the Asciinema CLI from the
+[installation guide](https://docs.asciinema.org/manual/cli/installation/), then
+authenticate it against your server:
+
+```bash
+asciinema auth --server-url https://<your-asciinema-domain>
+```
+
+Open the `/connect/...` URL it prints, entering the full
+`https://<your-asciinema-domain>` if prompted.
+
+## Step 6: Stream a terminal session with Tau audio
+
+With `tau-tower` and `tau-radio` running and the audio URL playing, start the
+stream:
+
+```bash
+asciinema stream -r \
+  --server-url https://<your-asciinema-domain> \
+  --audio-url https://<your-audio-domain>/tau.ogg
+```
+
+Asciinema opens a recorded shell, published at
+`https://<your-asciinema-domain>/s/<stream-id>`. Open that URL to watch, and the
+page plays the attached audio too. End the stream with `exit` or `Ctrl+D`.
