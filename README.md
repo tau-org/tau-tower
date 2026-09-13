@@ -18,64 +18,53 @@ Tau is two programs:
 - **`tau-tower`** is the server. It runs on a server, receives that stream, and
   serves it to many listeners at once.
 
----
+## Install tau-tower
 
-To install:
+Install the build tools that `tau-tower` needs:
+
+- [`Rust and Cargo`](https://www.rust-lang.org/tools/install)
+- Git
+- A C compiler available as `cc`
+- Make
+- Perl
+
+Then install `tau-tower`:
+
 ```bash
-$ cargo install --git https://github.com/tau-org/tau-tower
+cargo install --git https://github.com/tau-org/tau-tower
 ```
 
-The first time using the tool, it will search your system for a config file. 
-It looks for it in the path 
-```bash
-$HOME/.config/tau/tower.toml # on macOS
-```
-or 
-```bash
-$XDG_CONFIG_HOME/tau/tower.toml # on Linux
-```
+On first run, `tau-tower` looks for a config file. It uses
+`$XDG_CONFIG_HOME/tau/tower.toml` when `XDG_CONFIG_HOME` is set,
+`$HOME/.config/tau/tower.toml` when `HOME` is set, and `tower.toml` in the
+current directory as a fallback.
 
-If there is no config file located there, you will be prompted to create one. 
+If no config file exists, `tau-tower` prompts you to create one. To start over
+later, run `tau-tower --reset-config` and answer the prompts again.
+
+Values inside angle brackets are placeholders. Replace the whole placeholder,
+including the brackets, before saving the config file.
 
 ```toml
-# username and password are NOT secure, they only
-# link a tauradio and tautower service together
-username = "username" 
-password = "emanresu" 
+username = "<source-username>"
+password = "<source-password>"
 
-# Sets the listening port, to which the source stream is transmitted
-listen_port = 8000      
+listen_port = 8000
+broadcast_port = 8001
+broadcast_endpoint = "tau.ogg"
 
-# Sets the broadcast port, from which the stream will be accessable
-broadcast-port = 8001       
-
-# Sets the server http endpoint - http://localhost:8001/tau.ogg
-broadcast-endpoint = "tau.ogg"       
-
-# Optional: 
-# Sets which other sites are able to rebroadcast the stream
-# "*" allowes all, adding "http://localhost:4000" to list is redundant
-cors_allow_list = ["*", "http://localhost:4000"]
+cors_allow_list = ["*"]
 ```
 
 <!-- [![asciicast](https://asciinema.org/a/JqdeXeILf0lALG34pZzAarmih.svg)](https://asciinema.org/a/JqdeXeILf0lALG34pZzAarmih) -->
 
-If you want to temporarily overwrite the config, you are able to pass arguments.
+You can override config values with CLI arguments:
 
 ```bash
-# Ex: Uses temporary credentials, and disables the local recording. 
-$ tau-tower \
+tau-tower \
   --listen-port <listen-port> \
   --broadcast-port <broadcast-port> \
   --cors-allow-list "*"
-```
-
-### Dependencies
-
-**On Linux** (using apt):
-```bash
-$ sudo apt update
-$ sudo apt install build-essential
 ```
 
 ### Streaming Pipeline
