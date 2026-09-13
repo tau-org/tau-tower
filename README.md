@@ -67,40 +67,16 @@ tau-tower \
   --cors-allow-list "*"
 ```
 
-### Streaming Pipeline
+## Next steps
 
-[`tau-radio`](https://github.com/tau-org/tau-radio) runs on your local
-machine, and captures sound from the audio device on your system. The defaults
-are `BlackHole 2ch` on macOS, and `pipewire` on Linux, though these can be
-overwritten by the config or in the CLI arguments.
+Use the dedicated guides for setup details:
 
-The captured audio is then streamed to the
-[`tau-tower`](https://github.com/tau-org/tau-tower), which should run on a
-remote server. This server application exposes a audio media stream that can be
-consumed by many clients, as a web radio. 
-
-Alongside `tau-tower` should run an instance of [`Asciinema`](https://github.com/asciinema/asciinema) 
-which can use the live audio stream as background to a live terminal stream, by
-setting the broadcast endpoint URL as a media source in the streams settings.
-
-```
-https://example.com:8002/tau.ogg
-```
- 
-For this to work, the Asciinema origin must be added to `cors_allow_list` in `tower.toml`:
- 
-```toml
-cors_allow_list = ["https://example.com:4000"]
-```
-
-| your computer |  | remote server |  |  |
-| - | - | - | - | - |
-| (audio capture) | (opt. tls/ssl) | (proxy) | (broadcaster) | (opt. stream host) |
-| tau-radio -> | internet -> | Caddy  -> | tau-tower  -> | Asciinema |
-
-
-
-> For TLS termination and reverse proxy setup, see [Proxy Setup (Caddy)](docs/proxy-setup.md).
+- [Try Tau locally](docs/local-test.md) before deploying to a server.
+- [Self-host Tau on a VPS](docs/self-hosting.md) for a public audio stream.
+- [Put tau-tower behind Caddy](docs/proxy-setup.md) for HTTPS and proxy setup.
+- [Add a self-hosted Asciinema terminal stream](docs/asciinema_setup.md) after
+  the audio stream works.
+- [Configuration reference](docs/config-reference.md) for every config field.
 
 ## Funding
 
