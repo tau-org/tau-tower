@@ -1,23 +1,22 @@
 [![Compiles on macOS (Intel / Silicon), Ubuntu and NixOS](https://github.com/tau-org/tau-tower/actions/workflows/rust.yml/badge.svg?event=pull_request)](https://github.com/tau-org/tau-tower/actions/workflows/rust.yml)
 
-This project is funded through [NGI Zero Core](https://nlnet.nl/core), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/project/Tau).
+# tau-tower
 
-[<img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" width="20%" />](https://nlnet.nl)
-[<img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" width="20%" />](https://nlnet.nl/core)
+`tau-tower` is a server that broadcasts a
+[`tau-radio`](https://github.com/tau-org/tau-radio) audio stream to listeners on
+the web. It receives live audio from `tau-radio` running on your machine and
+serves it over one URL that listeners can open in any browser or media player.
+The stream is Ogg Opus and audio only.
 
-## Usage:
-This tool is built for livestreaming audio to the world wide web, broadcasting 
-a audio stream from an instance of 
-[`tau-radio`](https://github.com/tau-org/tau-radio), the accompanying software.
+Pair `tau-tower` with [Asciinema](https://asciinema.org) to broadcast a terminal
+session with live audio.
 
-Modelled after the Icecast software, it serves a html audio stream that can be
-used in a audio tag on any other website.
+Tau is two programs:
 
-You should run this on a remote server, such as a AWS, Digital Ocean or any VPS
-with the correct priviledges. 
-- Note that the smallest available Digital Ocean 'Droplet' does not have enough
-  RAM to build this project locally. The workaround is to build for that 
-  architecture using ex: `cargo build --target x86_64-unknown-linux-gnu`. 
+- **`tau-radio`** is the broadcaster client. It runs on your machine, captures
+  an audio device, and sends the stream out.
+- **`tau-tower`** is the server. It runs on a server, receives that stream, and
+  serves it to many listeners at once.
 
 ---
 
@@ -114,3 +113,9 @@ cors_allow_list = ["https://example.com:4000"]
 
 > For TLS termination and reverse proxy setup, see [Proxy Setup (Caddy)](docs/proxy-setup.md).
 
+## Funding
+
+This project is funded through [NGI Zero Core](https://nlnet.nl/core), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/project/Tau).
+
+[<img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" width="20%" />](https://nlnet.nl)
+[<img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" width="20%" />](https://nlnet.nl/core)
