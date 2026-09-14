@@ -18,6 +18,13 @@ Tau is two programs:
 - **`tau-tower`** is the server. It runs on a server, receives that stream, and
   serves it to many listeners at once.
 
+## Ports
+
+`tau-tower` uses two ports: `listen_port` receives audio from `tau-radio`, and
+`broadcast_port` serves the listener stream. If you put `tau-tower` behind
+Caddy, Caddy exposes the public ports and forwards to these `tau-tower` ports.
+See the [self-hosting guide](docs/self-hosting.md) for the full setup.
+
 ## Install tau-tower
 
 Install the build tools that `tau-tower` needs:
